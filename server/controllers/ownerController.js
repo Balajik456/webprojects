@@ -140,6 +140,8 @@ import imagekit from "../configs/imagekit.js";
 import Car from "../models/Car.js";
 import User from "../models/User.js";
 import Booking from "../models/Booking.js";
+import Repair from "../models/Repair.js";
+import mongoose from "mongoose";
 
 /* ================= CHANGE ROLE ================= */
 export const changeRoleToOwner = async (req, res) => {
@@ -159,7 +161,6 @@ export const addCar = async (req, res) => {
 
     const car = JSON.parse(req.body.carData);
 
-    // ✅ Validate priceperday
     if (!car.priceperday) {
       return res.status(400).json({
         success: false,
@@ -209,7 +210,6 @@ export const getOwnerCars = async (req, res) => {
 /* ================= TOGGLE AVAILABILITY ================= */
 export const toggleCarAvailability = async (req, res) => {
   const { carId } = req.body;
-
   const car = await Car.findById(carId);
 
   if (!car || car.owner.toString() !== req.user._id.toString()) {
@@ -225,7 +225,6 @@ export const toggleCarAvailability = async (req, res) => {
 /* ================= DELETE CAR ================= */
 export const deleteCar = async (req, res) => {
   const { carId } = req.body;
-
   const car = await Car.findOne({
     _id: carId,
     owner: req.user._id,
@@ -239,32 +238,88 @@ export const deleteCar = async (req, res) => {
   }
 
   await Car.deleteOne({ _id: carId });
-
   res.json({
     success: true,
     message: "Car deleted successfully",
   });
 };
 
+/* ================= COMBINED FINANCE & DASHBOARD ================= */
+export const getFinanceStats = async (req, res) => {
+  try {
+    const ownerId = req.user._id;
 
+    // 1. Calculate Rental Revenue: Converts string "88" to numeric 88 for sum
+    const rentalData = await Booking.aggregate([
+      {
+        $match: {
+          owner: new mongoose.Types.ObjectId(ownerId),
+          status: "confirmed",
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: { $toDouble: "$price" } },
+        },
+      },
+    ]);
 
+    // 2. Calculate Repair Earnings from Completed repairs
+    const repairData = await Repair.aggregate([
+      { $match: { status: "Completed" } },
+      {
+        $group: {
+          _id: null,
+          total: {
+            $sum: {
+              $convert: {
+                input: { $substr: ["$cost", 1, -1] },
+                to: "double",
+                onError: 0,
+              },
+            },
+          },
+        },
+      },
+    ]);
 
-/* ================= DASHBOARD ================= */
-export const getDashboardData = async (req, res) => {
-  if (req.user.role !== "owner") {
-    return res.json({ success: false, message: "Unauthorized" });
+    const rentalRevenue = rentalData.length > 0 ? rentalData[0].total : 0;
+    const repairRevenue = repairData.length > 0 ? repairData[0].total : 0;
+
+    // 3. Fetch Dashboard counts
+    const totalCars = await Car.countDocuments({ owner: ownerId });
+    const pendingCount = await Booking.countDocuments({
+      owner: ownerId,
+      status: "pending",
+    });
+    const confirmedCount = await Booking.countDocuments({
+      owner: ownerId,
+      status: "confirmed",
+    });
+
+    // 4. ✅ NEW: Fetch Recent Activity for the Dashboard Table
+    const recentBookings = await Booking.find({ owner: ownerId })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .populate("car", "brand model image");
+
+    res.json({
+      success: true,
+      stats: {
+        totalCars,
+        totalBookings: pendingCount + confirmedCount,
+        pendingBookings: pendingCount,
+        confirmedBookings: confirmedCount,
+        rentalRevenue,
+        repairRevenue,
+        totalRevenue: rentalRevenue + repairRevenue,
+      },
+      recentBookings, // ✅ Exported to fix "No recent bookings found"
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
-
-  const cars = await Car.find({ owner: req.user._id });
-  const bookings = await Booking.find({ owner: req.user._id }).populate("car");
-
-  res.json({
-    success: true,
-    dashboard: {
-      totalCars: cars.length,
-      totalBookings: bookings.length,
-    },
-  });
 };
 
 /* ================= UPDATE USER IMAGE ================= */
@@ -275,7 +330,7 @@ export const updateUserImage = async (req, res) => {
     }
 
     const uploadResponse = await imagekit.upload({
-      file: req.file.buffer, // ✅ FIX
+      file: req.file.buffer,
       fileName: req.file.originalname,
       folder: "users",
     });
@@ -283,7 +338,7 @@ export const updateUserImage = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       req.user._id,
       { image: uploadResponse.url },
-      { new: true }
+      { new: true },
     );
 
     res.json({

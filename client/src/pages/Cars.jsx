@@ -55,63 +55,53 @@ import CarCard from "../components/CarCard";
 import { useSearchParams } from "react-router-dom";
 import { useAppContext } from "../context/Appcontext";
 import toast from "react-hot-toast";
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 
 const Cars = () => {
   const [searchParams] = useSearchParams();
+  const locationParam = searchParams.get("location");
+  const pickupDate = searchParams.get("pickup");
+  const returnDate = searchParams.get("return");
 
-  const pickupLocation = searchParams.get("pickupLocation");
-  const pickupDate = searchParams.get("pickupDate");
-  const returnDate = searchParams.get("returnDate");
-
-  const { axios } = useAppContext(); // removed 'cars' dependency to ensure fresh fetch
+  const { axios } = useAppContext();
 
   const [input, setInput] = useState("");
   const [baseCars, setBaseCars] = useState([]);
   const [filteredCars, setFilteredCars] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ✅ 1. Main Logic: Decide what to fetch
   useEffect(() => {
-    if (pickupLocation && pickupDate && returnDate) {
-      // If URL has search data, run the specific availability search
+    // ✅ Logic: If search params exist, run a filtered search; otherwise, fetch all cars
+    if (locationParam && pickupDate && returnDate) {
       searchCarAvailability();
     } else {
-      // If URL is empty (Navbar click), fetch ALL cars
       fetchAllCars();
     }
-  }, [pickupLocation, pickupDate, returnDate]);
+  }, [locationParam, pickupDate, returnDate]);
 
-  // 🔹 Function to Fetch All Cars (For Browsing)
+  // 🔹 Fetch all cars for general browsing
   const fetchAllCars = async () => {
     try {
       setLoading(true);
-      const { data } = await axios.get("/api/car/cars");
+      const { data } = await axios.get("/api/car/list");
       if (data.success) {
         setBaseCars(data.cars);
         setFilteredCars(data.cars);
       }
     } catch (err) {
-      console.error(err);
       toast.error("Failed to load cars");
     } finally {
       setLoading(false);
     }
   };
 
-  // 🔹 Function to Fetch Available Cars (For Searching)
+  // 🔹 Fetch cars filtered by availability
   const searchCarAvailability = async () => {
     try {
       setLoading(true);
-      console.log("Searching with:", {
-        pickupLocation,
-        pickupDate,
-        returnDate,
-      });
-
       const { data } = await axios.get("/api/bookings/available-cars", {
         params: {
-          pickupLocation,
+          pickupLocation: locationParam,
           pickupDate,
           returnDate,
         },
@@ -120,88 +110,74 @@ const Cars = () => {
       if (data.success) {
         setBaseCars(data.cars);
         setFilteredCars(data.cars);
-
         if (data.cars.length === 0) {
-          toast("No cars available for these dates 🚗");
+          toast(`No cars available in ${locationParam} 🚗`);
         }
       }
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to load cars");
+      toast.error("Search error");
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ Text search filter (Client-side)
+  // ✅ Client-side live filter for the search bar
   useEffect(() => {
     if (!input) {
       setFilteredCars(baseCars);
       return;
     }
-
     const filtered = baseCars.filter(
       (car) =>
         car.brand.toLowerCase().includes(input.toLowerCase()) ||
-        car.model.toLowerCase().includes(input.toLowerCase()) ||
-        car.category.toLowerCase().includes(input.toLowerCase()) ||
-        car.transmission.toLowerCase().includes(input.toLowerCase()),
+        car.model.toLowerCase().includes(input.toLowerCase()),
     );
-
     setFilteredCars(filtered);
   }, [input, baseCars]);
 
   return (
-    <div>
+    <div className="pb-20">
       <motion.div
-        initial={{ y: 30, opacity: 0 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className="flex flex-col items-center py-20 bg-light"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="py-20 bg-gray-50 flex flex-col items-center"
       >
         <Title
           title="Available Cars"
-          subTitle="Browse our selection of premium vehicles"
+          subTitle="Browse our premium rental fleet"
         />
-
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="flex items-center bg-white px-4 mt-6 max-w-140 w-full h-12 rounded-full shadow"
-        >
-          <img src={assets.search_icon} className="w-4.5 h-4.5 mr-2" />
+        <div className="flex items-center bg-white px-4 mt-6 max-w-md w-full h-12 rounded-full shadow-sm border">
+          <img src={assets.search_icon} className="w-4 h-4 mr-2" alt="search" />
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Search by brand, model..."
-            className="w-full h-full outline-none text-gray-500"
+            placeholder="Search by brand or model..."
+            className="w-full outline-none text-sm"
           />
-        </motion.div>
-      </motion.div>
-
-      <motion.div
-        initial={{  opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.6 }}
-        className="px-6 lg:px-24 xl:px-32 mt-10"
-      >
-        <p className="text-gray-500">
-          {loading ? "Loading..." : `Showing ${filteredCars.length} Cars`}
-        </p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-4">
-          {loading ? (
-            <div className="col-span-full text-center py-10">
-              Loading cars...
-            </div>
-          ) : filteredCars.length > 0 ? (
-            filteredCars.map((car) => <CarCard key={car._id} car={car} />)
-          ) : (
-            <p className="text-center col-span-full py-10">No cars found 🚗</p>
-          )}
         </div>
       </motion.div>
+
+      <div className="px-6 lg:px-24 mt-10">
+        <p className="text-xs text-gray-400 font-bold mb-6 tracking-widest uppercase">
+          {loading
+            ? "Refreshing..."
+            : `Showing ${filteredCars.length} Vehicles`}
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {filteredCars.map((car) => (
+            <CarCard key={car._id} car={car} />
+          ))}
+        </div>
+
+        {!loading && filteredCars.length === 0 && (
+          <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-100">
+            <p className="text-gray-400 italic">
+              No vehicles found matching your criteria.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

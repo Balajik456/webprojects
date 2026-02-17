@@ -1,286 +1,28 @@
-// // import React, { useState } from "react";
-// // import { assets, ownerMenuLinks } from "../../assets/assets";
-// // import { Link, NavLink, useLocation } from "react-router-dom";
-// // import { useAppContext } from "../../context/Appcontext";
-// // import toast from "react-hot-toast";
-
-// // const Sidebar = () => {
-// //   const { user, axios, fetchUser } = useAppContext();
-// //   const location = useLocation();
-
-// //   const [image, setImage] = useState(null);
-
-// //   // Update user image
-// //   const updateImage = async () => {
-// //     if (!image) return toast.error("Please select an image");
-
-// //     try {
-// //       const formData = new FormData();
-// //       formData.append("image", image);
-
-// //       const { data } = await axios.post("/api/owner/update-image", formData, {
-// //         headers: {
-// //           "Content-Type": "multipart/form-data",
-// //         },
-// //       });
-
-// //       if (data.success) {
-// //         toast.success(data.message);
-// //         fetchUser();
-// //         setImage(null); // ✅ FIXED
-// //       } else {
-// //         toast.error(data.message);
-// //       }
-// //     } catch (error) {
-// //       toast.error(error.response?.data?.message || error.message);
-// //     }
-// //   };
-
-// //   return (
-// //     <aside className="w-64 bg-gray-100 min-h-screen p-4 flex flex-col items-center">
-// //       {/* Profile Image */}
-// //       <div className="relative group mb-4">
-// //         <label htmlFor="image-upload" className="cursor-pointer">
-// //           <img
-// //             src={
-// //               image
-// //                 ? URL.createObjectURL(image)
-// //                 : user?.image 
-// //             }
-// //             alt="Profile"
-// //             className="w-24 h-24 rounded-full object-cover border border-gray-300"
-// //           />
-
-// //           <input
-// //             type="file"
-// //             id="image-upload"
-// //             accept="image/*"
-// //             hidden
-// //             onChange={(e) => setImage(e.target.files[0])}
-// //           />
-
-// //           {/* Hover edit icon */}
-// //           <div className="absolute inset-0 bg-black/20 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-// //             <img src={assets.edit_icon} alt="edit" className="w-6 h-6" />
-// //           </div>
-// //         </label>
-
-// //         {/* Save button */}
-// //         {image && (
-// //           <button
-// //             onClick={updateImage}
-// //             className="mt-2 px-3 py-1 bg-blue-600 text-white rounded flex items-center gap-1 text-sm"
-// //           >
-// //             Save
-// //             <img src={assets.check_icon} alt="check" className="w-3 h-3" />
-// //           </button>
-// //         )}
-// //       </div>
-
-// //       {/* Owner Name */}
-// //       <p className="text-base font-semibold mb-4">{user?.name || "Owner"}</p>
-
-// //       {/* Menu Links */}
-// //       <ul className="w-full space-y-2">
-// //         {ownerMenuLinks.map((link, index) => (
-// //           <li key={index}>
-// //             <NavLink
-// //               to={link.path}
-// //               className={({ isActive }) =>
-// //                 `flex items-center gap-2 w-full py-2 px-3 rounded ${
-// //                   isActive
-// //                     ? "bg-blue-100 text-blue-600 font-bold"
-// //                     : "text-gray-700"
-// //                 }`
-// //               }
-// //             >
-// //               <img
-// //                 src={
-// //                   location.pathname === link.path ? link.coloredIcon : link.icon
-// //                 }
-// //                 alt={link.name}
-// //                 className="w-5 h-5"
-// //               />
-// //               <span>{link.name}</span>
-// //             </NavLink>
-// //           </li>
-// //         ))}
-// //         <li>
-// //           <Link
-// //             to="/"
-// //             className="block py-2 px-3 text-gray-700 hover:bg-gray-200 rounded"
-// //           >
-// //             Back to Website
-// //           </Link>
-// //         </li>
-// //       </ul>
-// //     </aside>
-// //   );
-// // };
-
-// // export default Sidebar;
-// import React, { useEffect, useState } from "react";
-// import { assets, ownerMenuLinks } from "../../assets/assets";
-// import { Link, NavLink, useLocation } from "react-router-dom";
-// import { useAppContext } from "../../context/Appcontext";
-// import toast from "react-hot-toast";
-
-// const Sidebar = () => {
-//   const { user, loading, axios, fetchUser } = useAppContext();
-//   const location = useLocation();
-
-//   const [image, setImage] = useState(null);
-//   const [preview, setPreview] = useState(null);
-
-//   // Create preview URL safely
-//   useEffect(() => {
-//     if (!image) {
-//       setPreview(null);
-//       return;
-//     }
-
-//     const objectUrl = URL.createObjectURL(image);
-//     setPreview(objectUrl);
-
-//     return () => URL.revokeObjectURL(objectUrl);
-//   }, [image]);
-
-//   // Update user image
-//   const updateImage = async () => {
-//     if (!image) return toast.error("Please select an image");
-
-//     try {
-//       const formData = new FormData();
-//       formData.append("image", image);
-
-//       const { data } = await axios.post(
-//         "/api/owner/update-image",
-//         formData,
-//         {
-//           headers: { "Content-Type": "multipart/form-data" },
-//         }
-//       );
-
-//       if (data.success) {
-//         toast.success(data.message);
-//         await fetchUser(); // 🔥 ensure fresh image
-//         setImage(null);
-//       } else {
-//         toast.error(data.message);
-//       }
-//     } catch (error) {
-//       toast.error(error.response?.data?.message || error.message);
-//     }
-//   };
-
-//   // 🔒 Prevent render until user is loaded
-//   if (loading) {
-//     return (
-//       <aside className="w-64 min-h-screen flex items-center justify-center bg-gray-100">
-//         Loading...
-//       </aside>
-//     );
-//   }
-
-//   return (
-//     <aside className="w-64 bg-gray-100 min-h-screen p-4 flex flex-col items-center">
-//       {/* Profile Image */}
-//       <div className="relative group mb-4">
-//         <label htmlFor="image-upload" className="cursor-pointer">
-//           <img
-//             src={preview || user?.image || assets.default_avatar}
-//             alt="Profile"
-//             className="w-24 h-24 rounded-full object-cover border border-gray-300"
-//           />
-
-//           <input
-//             type="file"
-//             id="image-upload"
-//             accept="image/*"
-//             hidden
-//             onChange={(e) => setImage(e.target.files[0])}
-//           />
-
-//           {/* Hover edit icon */}
-//           <div className="absolute inset-0 bg-black/20 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-//             <img src={assets.edit_icon} alt="edit" className="w-6 h-6" />
-//           </div>
-//         </label>
-
-//         {/* Save button */}
-//         {image && (
-//           <button
-//             onClick={updateImage}
-//             className="mt-2 px-3 py-1 bg-blue-600 text-white rounded flex items-center gap-1 text-sm"
-//           >
-//             Save
-//             <img src={assets.check_icon} alt="check" className="w-3 h-3" />
-//           </button>
-//         )}
-//       </div>
-
-//       {/* Owner Name */}
-//       <p className="text-base font-semibold mb-4">
-//         {user?.name || "Owner"}
-//       </p>
-
-//       {/* Menu Links */}
-//       <ul className="w-full space-y-2">
-//         {ownerMenuLinks.map((link, index) => (
-//           <li key={index}>
-//             <NavLink
-//               to={link.path}
-//               className={({ isActive }) =>
-//                 `flex items-center gap-2 w-full py-2 px-3 rounded ${
-//                   isActive
-//                     ? "bg-blue-100 text-blue-600 font-bold"
-//                     : "text-gray-700"
-//                 }`
-//               }
-//             >
-//               <img
-//                 src={
-//                   location.pathname === link.path
-//                     ? link.coloredIcon
-//                     : link.icon
-//                 }
-//                 alt={link.name}
-//                 className="w-5 h-5"
-//               />
-//               <span>{link.name}</span>
-//             </NavLink>
-//           </li>
-//         ))}
-
-//         <li>
-//           <Link
-//             to="/"
-//             className="block py-2 px-3 text-gray-700 hover:bg-gray-200 rounded"
-//           >
-//             Back to Website
-//           </Link>
-//         </li>
-//       </ul>
-//     </aside>
-//   );
-// };
-
-// export default Sidebar;
-
 import React, { useEffect, useState } from "react";
-import { assets, ownerMenuLinks } from "../../assets/assets";
+import { assets } from "../../assets/assets";
 import { Link, NavLink } from "react-router-dom";
 import { useAppContext } from "../../context/Appcontext";
+import {
+  LayoutDashboard,
+  PlusCircle,
+  Car,
+  CalendarCheck,
+  Wallet,
+  Wrench,
+  Store, // ✅ Added Store icon
+  LogOut,
+} from "lucide-react";
 import toast from "react-hot-toast";
 
 const Sidebar = () => {
-  const { user, axios, fetchUser } = useAppContext();
-
+  const { user, axios, fetchUser, repairs, isOwner } = useAppContext();
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // Preview handling (no memory leak)
+  // ✅ Notification Logic: Count pending repairs for the owner
+  const pendingCount = repairs.filter((r) => r.status === "Pending").length;
+
   useEffect(() => {
     if (!image) {
       setPreview(null);
@@ -292,34 +34,19 @@ const Sidebar = () => {
   }, [image]);
 
   const updateImage = async () => {
-    if (!image) {
-      toast.error("Please select an image");
-      return;
-    }
-
+    if (!image) return toast.error("Please select an image");
     setLoading(true);
-
     try {
       const formData = new FormData();
       formData.append("image", image);
-
-      const { data } = await axios.post(
-        "/api/owner/update-image",
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
-
-      if (!data.success) {
-        toast.error(data.message);
-        setLoading(false);
-        return;
+      const { data } = await axios.post("/api/owner/update-image", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      if (data.success) {
+        toast.success("Image updated successfully");
+        await fetchUser();
+        setImage(null);
       }
-
-      toast.success("Image updated successfully");
-
-      // IMPORTANT
-      await fetchUser();   // wait until user updates
-      setImage(null);      // reset file input
     } catch (err) {
       toast.error(err.response?.data?.message || err.message);
     } finally {
@@ -327,23 +54,32 @@ const Sidebar = () => {
     }
   };
 
+  const linkClasses = ({ isActive }) =>
+    `flex items-center justify-between py-2.5 px-4 rounded-xl transition-all ${
+      isActive
+        ? "bg-indigo-600 text-white shadow-md font-semibold"
+        : "text-gray-600 hover:bg-indigo-50"
+    }`;
+
   return (
-    <aside className="w-64 bg-gray-100 min-h-screen p-4 flex flex-col items-center">
-      {/* PROFILE IMAGE */}
-      <div className="mb-4 flex flex-col items-center">
-        <label htmlFor="image-upload" className="relative cursor-pointer group">
+    <aside className="w-64 bg-white min-h-screen p-4 flex flex-col items-center border-r border-gray-200 sticky top-0">
+      {/* --- Profile Section --- */}
+      <div className="mb-8 flex flex-col items-center pt-4">
+        <label
+          htmlFor="sidebar-image-upload"
+          className="relative cursor-pointer group"
+        >
           <img
-            src={preview || user?.image || "https://via.placeholder.com/150"}
+            src={preview || user?.image || assets.default_avatar}
             alt="Profile"
-            className="w-24 h-24 rounded-full object-cover border"
+            className="w-20 h-20 rounded-full object-cover border-2 border-indigo-100 shadow-sm"
           />
-          <div className="absolute inset-0 bg-black/30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-            <img src={assets.edit_icon} alt="edit" className="w-6 h-6" />
+          <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <PlusCircle size={20} className="text-white" />
           </div>
         </label>
-
         <input
-          id="image-upload"
+          id="sidebar-image-upload"
           type="file"
           accept="image/*"
           hidden
@@ -354,53 +90,102 @@ const Sidebar = () => {
           <button
             onClick={updateImage}
             disabled={loading}
-            className="mt-2 px-3 py-1 bg-blue-600 text-white rounded text-sm disabled:opacity-50"
+            className="mt-2 text-xs bg-indigo-600 text-white px-3 py-1 rounded-full"
           >
-            {loading ? "Saving..." : "Save"}
+            {loading ? "..." : "Save"}
           </button>
         )}
+        <p className="font-bold mt-3 text-gray-800 tracking-tight">
+          {user?.name || "Owner"}
+        </p>
+        <span className="text-[10px] bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full font-bold uppercase mt-1">
+          Website Owner
+        </span>
       </div>
 
-      {/* NAME */}
-      <p className="font-semibold mb-4">{user?.name || "Owner"}</p>
-
-      {/* MENU */}
-      <ul className="w-full space-y-2">
-        {ownerMenuLinks.map((link) => (
-          <li key={link.path}>
-            <NavLink
-              to={link.path}
-              className={({ isActive }) =>
-                `flex items-center gap-2 py-2 px-3 rounded ${
-                  isActive
-                    ? "bg-blue-100 text-blue-600 font-bold"
-                    : "text-gray-700"
-                }`
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <img
-                    src={isActive ? link.coloredIcon : link.icon}
-                    alt={link.name}
-                    className="w-5 h-5"
-                  />
-                  <span>{link.name}</span>
-                </>
-              )}
-            </NavLink>
-          </li>
-        ))}
+      {/* --- Navigation Menu --- */}
+      <ul className="w-full space-y-2 flex-1">
+        <li>
+          <NavLink to="/owner" end className={linkClasses}>
+            <div className="flex items-center gap-3">
+              <LayoutDashboard size={18} />
+              <span className="font-medium">Dashboard</span>
+            </div>
+          </NavLink>
+        </li>
 
         <li>
-          <Link
-            to="/"
-            className="block py-2 px-3 rounded text-gray-700 hover:bg-gray-200"
-          >
-            Back to Website
-          </Link>
+          <NavLink to="/owner/add-car" className={linkClasses}>
+            <div className="flex items-center gap-3">
+              <PlusCircle size={18} />
+              <span className="font-medium">Add Car</span>
+            </div>
+          </NavLink>
+        </li>
+
+        <li>
+          <NavLink to="/owner/manage-cars" className={linkClasses}>
+            <div className="flex items-center gap-3">
+              <Car size={18} />
+              <span className="font-medium">Manage Cars</span>
+            </div>
+          </NavLink>
+        </li>
+
+        <li>
+          <NavLink to="/owner/manage-bookings" className={linkClasses}>
+            <div className="flex items-center gap-3">
+              <CalendarCheck size={18} />
+              <span className="font-medium">Manage Bookings</span>
+            </div>
+          </NavLink>
+        </li>
+
+        <li>
+          <NavLink to="/owner/finance" className={linkClasses}>
+            <div className="flex items-center gap-3">
+              <Wallet size={18} />
+              <span className="font-medium">Finance Summary</span>
+            </div>
+          </NavLink>
+        </li>
+
+        {/* ✅ NEW: Manage Shops Link */}
+        <li>
+          <NavLink to="/owner/manage-shops" className={linkClasses}>
+            <div className="flex items-center gap-3">
+              <Store size={18} />
+              <span className="font-medium">Manage Shops</span>
+            </div>
+          </NavLink>
+        </li>
+
+        {/* ✅ Repair Management Link with Notification Badge */}
+        <li>
+          <NavLink to="/owner/repairs" className={linkClasses}>
+            <div className="flex items-center gap-3">
+              <Wrench size={18} />
+              <span className="font-medium">Repair Management</span>
+            </div>
+            {pendingCount > 0 && (
+              <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">
+                {pendingCount}
+              </span>
+            )}
+          </NavLink>
         </li>
       </ul>
+
+      {/* --- Bottom Section --- */}
+      <div className="w-full pt-4 border-t border-gray-100">
+        <Link
+          to="/"
+          className="flex items-center gap-3 py-2.5 px-4 rounded-xl text-gray-500 hover:text-indigo-600 transition-colors"
+        >
+          <LogOut size={18} />
+          <span className="text-sm font-medium">Back to Website</span>
+        </Link>
+      </div>
     </aside>
   );
 };

@@ -1,22 +1,3 @@
-// import mongoose from "mongoose";
-
-// const userSchema = new mongoose.Schema(
-//   {
-//     name: String,
-//     email: String,
-//     password: String,
-//     role: {
-//       type: String,
-//       enum: ["user", "owner"],
-//       default: "user",
-//     },
-//   },
-//   { timestamps: true }
-// );
-
-// export default mongoose.model("User", userSchema);
-
-
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
@@ -41,16 +22,16 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["user", "owner"],
+      enum: ["user", "owner", "admin"], // ✅ ADDED "admin"
       default: "user",
     },
 
     image: {
-      type: String, // 🔥 stores ImageKit URL
+      type: String,
       default: "",
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model("User", userSchema);

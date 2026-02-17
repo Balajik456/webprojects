@@ -9,6 +9,7 @@ const MyBooking = () => {
   const { axios, user, currency } = useAppContext();
   const [bookings, setBookings] = useState([]);
 
+  // ✅ Logic: Fetches only the bookings belonging to the logged-in user
   const fetchMyBookings = async () => {
     try {
       const { data } = await axios.get("/api/bookings/user");
@@ -18,17 +19,19 @@ const MyBooking = () => {
         toast.error(data.message);
       }
     } catch (error) {
-      toast.error(error.message);
+      toast.error("Failed to fetch bookings");
     }
   };
 
   useEffect(() => {
-    user && fetchMyBookings();
+    if (user) {
+      fetchMyBookings();
+    }
   }, [user]);
 
   return (
     <motion.div
-      className="px-6 md:px-16 lg:px-24 xl:px-32 2xl:px-48 mt-16 text-sm max-w-7xl"
+      className="px-6 md:px-16 lg:px-24 xl:px-32 2xl:px-48 mt-16 text-sm max-w-7xl mx-auto"
       initial={{ y: 30, opacity: 0 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
@@ -39,94 +42,118 @@ const MyBooking = () => {
         align="left"
       />
 
-      <div>
-        {bookings.map((booking, index) => (
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: index * 0.1 }}
-            key={booking._id || index}
-            className="grid grid-cols-1 md:grid-cols-4 gap-8 p-6 border border-borderColor rounded-lg mt-5 first:mt-12"
-          >
-            {/* Car Image + Info */}
-            <div className="md:col-span-1">
-              <div className="rounded-md overflow-hidden mb-3">
-                <img
-                  src={booking.car.image}
-                  alt=""
-                  className="w-full aspect-video object-cover"
-                />
-              </div>
-              <p className="text-lg font-medium mt-2">
-                {booking.car.brand} {booking.car.model}
-              </p>
-              <p className="text-gray-500">
-                {booking.car.year} · {booking.car.category} ·{" "}
-                {booking.car.location}
-              </p>
-            </div>
-
-            {/* Booking Info */}
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-2">
-                <p className="px-3 py-1.5 bg-light rounded">
-                  Booking #{index + 1}
+      <div className="mt-10">
+        {bookings.length > 0 ? (
+          bookings.map((booking, index) => (
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: index * 0.1 }}
+              key={booking._id}
+              className="grid grid-cols-1 md:grid-cols-4 gap-8 p-6 border border-gray-100 shadow-sm rounded-xl mb-6 bg-white"
+            >
+              {/* ✅ Car Info Column - Uses optional chaining to prevent crash */}
+              <div className="md:col-span-1">
+                <div className="rounded-lg overflow-hidden mb-3 bg-gray-100 aspect-video">
+                  <img
+                    src={booking.car?.image || assets.default_car_placeholder}
+                    alt={booking.car?.model}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <p className="text-lg font-bold text-gray-800 uppercase tracking-tight">
+                  {booking.car?.brand} {booking.car?.model}
                 </p>
-
-                <p
-                  className={`px-3 py-1 text-xs rounded-full ${
-                    booking.status === "confirmed"
-                      ? "bg-green-400/15 text-green-600"
-                      : "bg-red-400/15 text-red-600"
-                  }`}
-                >
-                  {booking.status}
+                <p className="text-gray-400 text-xs font-medium">
+                  {booking.car?.year} · {booking.car?.category}
                 </p>
               </div>
 
-              {/* Rental Period */}
-              <div className="flex items-start gap-2 mt-3">
-                <img
-                  src={assets.calendar_icon_colored}
-                  alt=""
-                  className="w-4 h-4 mt-1"
-                />
-                <div>
-                  <p className="text-gray-500">Rental period</p>
-                  <p>
-                    {booking.pickupDate.split("T")[0]} To{" "}
-                    {booking.returnDate.split("T")[0]}
+              {/* ✅ Booking Details Column */}
+              <div className="md:col-span-2">
+                <div className="flex items-center gap-3 mb-4">
+                  <p className="px-3 py-1 bg-blue-50 text-blue-600 rounded-md font-bold text-[10px] uppercase">
+                    Booking #{index + 1}
+                  </p>
+
+                  {/* ✅ Concept: Status updated by admin */}
+                  <p
+                    className={`px-3 py-1 text-[10px] rounded-full font-black uppercase tracking-widest ${
+                      booking.status === "confirmed"
+                        ? "bg-green-100 text-green-600"
+                        : booking.status === "cancelled"
+                          ? "bg-red-100 text-red-600"
+                          : "bg-orange-100 text-orange-600"
+                    }`}
+                  >
+                    {booking.status}
                   </p>
                 </div>
-              </div>
 
-              {/* Pickup Location */}
-              <div className="flex items-start gap-2 mt-3">
-                <img
-                  src={assets.location_icon}
-                  alt=""
-                  className="w-4 h-4 mt-1"
-                />
-                <div>
-                  <p className="text-gray-500">Pickup location</p>
-                  <p>{booking.car.location}</p>
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <img
+                      src={assets.calendar_icon_colored}
+                      className="w-4 h-4 mt-0.5"
+                      alt="calendar"
+                    />
+                    <div>
+                      <p className="text-gray-400 text-[10px] font-bold uppercase">
+                        Rental period
+                      </p>
+                      <p className="text-gray-700 font-medium">
+                        {new Date(booking.pickupDate).toLocaleDateString()} —{" "}
+                        {new Date(booking.returnDate).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <img
+                      src={assets.location_icon}
+                      className="w-4 h-4 mt-0.5"
+                      alt="location"
+                    />
+                    <div>
+                      <p className="text-gray-400 text-[10px] font-bold uppercase">
+                        Pickup location
+                      </p>
+                      <p className="text-gray-700 font-medium">
+                        {booking.car?.location || "N/A"}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Price */}
-            <div className="md:col-span-1 flex flex-col justify-between gap-6 text-right">
-              <div className="text-sm text-gray-500">
-                <p>Total Price</p>
-                <h1 className="text-2xl font-semibold text-primary">
+              {/* ✅ Price Column */}
+              <div className="md:col-span-1 flex flex-col justify-center items-end border-l border-gray-50 pl-6">
+                <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest mb-1">
+                  Total Paid
+                </p>
+                <h1 className="text-3xl font-black text-gray-900">
                   {currency}
                   {booking.price}
                 </h1>
-                <p>Booked on {booking.createdAt.split("T")[0]}</p>
+                <p className="text-[10px] text-gray-400 mt-2 font-medium">
+                  Ref: {booking._id.slice(-8).toUpperCase()}
+                </p>
               </div>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          ))
+        ) : (
+          <div className="text-center py-24 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+            <p className="text-gray-400 font-medium italic">
+              You haven't made any bookings yet.
+            </p>
+            <button
+              onClick={() => navigate("/cars")}
+              className="mt-4 text-blue-600 font-bold hover:underline"
+            >
+              Browse Available Cars
+            </button>
+          </div>
+        )}
       </div>
     </motion.div>
   );

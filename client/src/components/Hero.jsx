@@ -1,59 +1,81 @@
 import React, { useState } from "react";
 import { assets, cityList } from "../assets/assets";
 import { useAppContext } from "../context/Appcontext";
-import { delay, motion } from "motion/react";
+import { motion } from "framer-motion";
+import toast from "react-hot-toast";
 
 const Hero = () => {
   const [pickupLocation, setPickupLocation] = useState("");
 
+  // Using global state for functionality
   const { pickupDate, setPickupDate, returnDate, setReturnDate, navigate } =
     useAppContext();
+
+  // Get today's date for minimum date validation
+  const today = new Date().toISOString().split("T")[0];
 
   const handleSearch = (e) => {
     e.preventDefault();
 
-    if (!pickupLocation || !pickupDate || !returnDate) {
-      alert("Please select all fields");
+    // ✅ FIXED: Better validation - check each field separately
+    if (!pickupLocation || pickupLocation.trim() === "") {
+      toast.error("Please select a pickup location");
       return;
     }
 
+    if (!pickupDate || pickupDate === "") {
+      toast.error("Please select a pickup date");
+      return;
+    }
+
+    if (!returnDate || returnDate === "") {
+      toast.error("Please select a return date");
+      return;
+    }
+
+    // ✅ Additional validation: Return date should be after pickup date
+    const pickup = new Date(pickupDate);
+    const returnD = new Date(returnDate);
+
+    if (returnD <= pickup) {
+      toast.error("Return date must be after pickup date");
+      return;
+    }
+
+    // Navigate to the search results page
     navigate(
-      `/cars?pickupLocation=${pickupLocation}&pickupDate=${pickupDate}&returnDate=${returnDate}`
+      `/cars?location=${encodeURIComponent(pickupLocation)}&pickup=${pickupDate}&return=${returnDate}`,
     );
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.8 }}
-      className="h-screen flex flex-col items-center justify-center gap-10 bg-light text-center"
-    >
+    <div className="h-screen flex flex-col items-center justify-center gap-10 bg-light text-center overflow-hidden px-4">
+      {/* Heading */}
       <motion.h1
-        initial={{ y: 50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.8, delay: 0.2 }}
-        className="text-4xl md:text-5xl font-semibold"
+        initial={{ opacity: 0, y: -50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="text-4xl md:text-5xl font-semibold text-gray-800"
       >
         Luxury cars on Rent
       </motion.h1>
 
+      {/* Search Form */}
       <motion.form
-        initial={{ scale: 0.95, opacity: 0, y: 50 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.4 }}
         onSubmit={handleSearch}
-        className="flex flex-col md:flex-row items-start md:items-center
-        justify-between p-6 rounded-lg md:rounded-full w-full max-w-80 md:max-w-200
-        bg-white shadow-[0px_8px_20px_rgba(0,0,0,0.1)]"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.3, duration: 0.6 }}
+        whileHover={{ shadow: "0px 10px 30px rgba(0,0,0,0.15)" }}
+        className="flex flex-col md:flex-row items-start md:items-center justify-between p-6 rounded-lg md:rounded-full w-full max-w-80 md:max-w-[800px] bg-white shadow-[0px_8px_20px_rgba(0,0,0,0.1)] z-10"
       >
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-10 md:ml-8">
-          {/* Pickup Location */}
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-10 md:ml-8 w-full">
+          {/* Location Dropdown */}
           <div className="flex flex-col items-start gap-2">
             <select
-              required
+              className="outline-none bg-transparent cursor-pointer font-normal text-gray-700"
               value={pickupLocation}
-              onChange={(e) => setPickupLocation(e.target.value.trim())}
+              onChange={(e) => setPickupLocation(e.target.value)}
             >
               <option value="">Pickup Location</option>
               {cityList.map((city) => (
@@ -62,57 +84,78 @@ const Hero = () => {
                 </option>
               ))}
             </select>
-
-            <p className="text-sm text-gray-500">
-              {pickupLocation || "Please select location"}
+            <p className="px-1 text-sm text-gray-500">
+              {pickupLocation ? pickupLocation : "Please Select Location"}
             </p>
           </div>
 
           {/* Pickup Date */}
           <div className="flex flex-col items-start gap-2">
-            <label>Pickup Date</label>
+            <label className="text-gray-600 text-sm" htmlFor="pickup-date">
+              Pickup Date
+            </label>
             <input
               type="date"
+              id="pickup-date"
               value={pickupDate}
               onChange={(e) => setPickupDate(e.target.value)}
-              min={new Date().toISOString().split("T")[0]}
-              required
+              min={today}
+              className="text-sm text-gray-500 outline-none cursor-pointer"
             />
           </div>
 
           {/* Return Date */}
           <div className="flex flex-col items-start gap-2">
-            <label>Return Date</label>
+            <label className="text-gray-600 text-sm" htmlFor="return-date">
+              Return Date
+            </label>
             <input
               type="date"
+              id="return-date"
               value={returnDate}
               onChange={(e) => setReturnDate(e.target.value)}
-              min={pickupDate}
-              required
+              min={pickupDate || today}
+              className="text-sm text-gray-500 outline-none cursor-pointer"
             />
           </div>
         </div>
 
+        {/* Search Button */}
         <motion.button
+          type="submit"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          type="submit"
-          className="flex items-center gap-2 px-9 py-3 bg-primary text-white rounded-full"
+          className="flex items-center justify-center gap-2 px-9 py-3 max-sm:mt-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full cursor-pointer transition-colors shadow-lg"
         >
-          <img src={assets.search_icon} alt="search" />
+          <img
+            src={assets.search_icon}
+            alt="search"
+            className="brightness-200 h-4"
+          />
           Search
         </motion.button>
       </motion.form>
 
-      <motion.img
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.8, delay: 0.6 }}
-        src={assets.main_car}
-        alt="car"
-        className="max-h-74"
-      />
-    </motion.div>
+      {/* Main Car Image with Floating Animation */}
+      <motion.div
+        initial={{ x: 500, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 0.5, duration: 1, type: "spring", stiffness: 50 }}
+        className="relative"
+      >
+        <motion.img
+          src={assets.main_car}
+          alt="car"
+          className="max-h-74 drop-shadow-2xl"
+          animate={{ y: [0, -15, 0] }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      </motion.div>
+    </div>
   );
 };
 

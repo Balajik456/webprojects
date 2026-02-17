@@ -26,8 +26,9 @@ import {
   addCar,
   changeRoleToOwner,
   deleteCar,
-  getDashboardData,
+ 
   getOwnerCars,
+  getFinanceStats,
   toggleCarAvailability,
   updateUserImage,
 } from "../controllers/ownerController.js";
@@ -60,7 +61,8 @@ ownerRouter.post("/delete-car", protect, deleteCar);
 /* ===============================
    DASHBOARD
 ================================ */
-ownerRouter.get("/dashboard", protect, getDashboardData);
+
+ownerRouter.get("/dashboard-stats", protect, getFinanceStats);
 
 /* ===============================
    PROFILE IMAGE

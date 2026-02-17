@@ -37,6 +37,8 @@ import userRouter from "./routes/userRouter.js";
 import ownerRouter from "./routes/ownerRouter.js";
 import bookingRouter from "./routes/bookingRouter.js";
 import carRouter from "./routes/carRouter.js";
+import repairRouter from "./routes/repairRouter.js";
+import mechanicShopRouter from "./routes/mechanicShopRouter.js";
 
 const app = express();
 
@@ -60,6 +62,8 @@ app.use("/api/user", userRouter);
 app.use("/api/owner", ownerRouter);
 app.use("/api/bookings", bookingRouter);
 app.use("/api/car", carRouter);
+app.use("/api/repair", repairRouter);
+app.use("/api/mechanic-shop", mechanicShopRouter);
 
 app.get("/", (req, res) => {
   res.send("Server running OK");
