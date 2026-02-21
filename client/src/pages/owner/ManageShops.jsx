@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAppContext } from "../../context/Appcontext";
-import { MapPin, Phone, Plus, Edit, Trash2 } from "lucide-react";
+import { MapPin, Phone, Plus, Edit, Trash2, Share2, Copy } from "lucide-react";
 import toast from "react-hot-toast";
 
 const ManageShops = () => {
@@ -11,6 +11,7 @@ const ManageShops = () => {
     shopName: "",
     ownerName: "",
     phoneNumber: "",
+    email: "",
     address: "",
     city: "",
     latitude: "",
@@ -85,6 +86,7 @@ const ManageShops = () => {
           shopName: "",
           ownerName: "",
           phoneNumber: "",
+          email: "",
           address: "",
           city: "",
           latitude: "",
@@ -112,6 +114,20 @@ const ManageShops = () => {
     } catch (error) {
       toast.error("Failed to delete shop");
     }
+  };
+
+  // ✅ NEW: Copy subscription link
+  const copySubscriptionLink = (shopId, shopName) => {
+    const link = `${window.location.origin}/mechanic/subscribe/${shopId}`;
+    navigator.clipboard.writeText(link);
+    toast.success(`📋 Link copied for ${shopName}!`);
+  };
+
+  // ✅ NEW: Share via WhatsApp
+  const shareViaWhatsApp = (shop) => {
+    const link = `${window.location.origin}/mechanic/subscribe/${shop._id}`;
+    const message = `Hello ${shop.ownerName},%0A%0ASubscribe to our platform to receive car repair requests!%0A%0A💳 Plans:%0A- Monthly: ₹100/month%0A- Annual: ₹1000/year%0A%0AClick here to subscribe: ${link}`;
+    window.open(`https://wa.me/${shop.phoneNumber}?text=${message}`, "_blank");
   };
 
   return (
@@ -156,7 +172,17 @@ const ManageShops = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, phoneNumber: e.target.value })
                 }
-                placeholder="Phone Number"
+                placeholder="Phone Number (with country code)"
+                className="border p-3 rounded-lg outline-none"
+                required
+              />
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
+                placeholder="Email"
                 className="border p-3 rounded-lg outline-none"
                 required
               />
@@ -277,24 +303,43 @@ const ManageShops = () => {
               <span className="text-xs">{shop.address}</span>
             </p>
 
+            {/* Subscription Status */}
             <div className="mt-3 pt-3 border-t">
-              <p className="text-xs text-gray-400">
-                📍 {shop.latitude.toFixed(4)}, {shop.longitude.toFixed(4)}
-              </p>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-gray-500">Subscription:</span>
+                <span
+                  className={`text-xs px-2 py-1 rounded-full font-bold ${
+                    shop.subscriptionStatus === "active"
+                      ? "bg-green-100 text-green-700"
+                      : shop.subscriptionStatus === "pending"
+                        ? "bg-yellow-100 text-yellow-700"
+                        : "bg-gray-100 text-gray-500"
+                  }`}
+                >
+                  {shop.subscriptionStatus || "None"}
+                </span>
+              </div>
             </div>
 
-            {shop.specialization && shop.specialization.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1">
-                {shop.specialization.map((spec, idx) => (
-                  <span
-                    key={idx}
-                    className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded"
-                  >
-                    {spec}
-                  </span>
-                ))}
-              </div>
-            )}
+            {/* ✅ NEW: Share Subscription Link Buttons */}
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={() => copySubscriptionLink(shop._id, shop.shopName)}
+                className="flex-1 bg-blue-500 text-white py-2 px-3 rounded-lg text-xs font-bold hover:bg-blue-600 flex items-center justify-center gap-1"
+                title="Copy subscription link"
+              >
+                <Copy size={14} />
+                Copy Link
+              </button>
+              <button
+                onClick={() => shareViaWhatsApp(shop)}
+                className="flex-1 bg-green-500 text-white py-2 px-3 rounded-lg text-xs font-bold hover:bg-green-600 flex items-center justify-center gap-1"
+                title="Share via WhatsApp"
+              >
+                <Share2 size={14} />
+                WhatsApp
+              </button>
+            </div>
           </div>
         ))}
 

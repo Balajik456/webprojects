@@ -9,7 +9,8 @@ import {
   CalendarCheck,
   Wallet,
   Wrench,
-  Store, // ✅ Added Store icon
+  Store,
+  DollarSign, // ✅ NEW
   LogOut,
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -98,9 +99,7 @@ const Sidebar = () => {
         <p className="font-bold mt-3 text-gray-800 tracking-tight">
           {user?.name || "Owner"}
         </p>
-        <span className="text-[10px] bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full font-bold uppercase mt-1">
-          Website Owner
-        </span>
+       
       </div>
 
       {/* --- Navigation Menu --- */}
@@ -150,7 +149,7 @@ const Sidebar = () => {
           </NavLink>
         </li>
 
-        {/* ✅ NEW: Manage Shops Link */}
+        {/* ✅ Manage Shops Link */}
         <li>
           <NavLink to="/owner/manage-shops" className={linkClasses}>
             <div className="flex items-center gap-3">
@@ -172,6 +171,16 @@ const Sidebar = () => {
                 {pendingCount}
               </span>
             )}
+          </NavLink>
+        </li>
+
+        {/* ✅ NEW: Subscriptions Link */}
+        <li>
+          <NavLink to="/owner/subscriptions" className={linkClasses}>
+            <div className="flex items-center gap-3">
+              <DollarSign size={18} />
+              <span className="font-medium">Subscriptions</span>
+            </div>
           </NavLink>
         </li>
       </ul>

@@ -132,8 +132,9 @@ export const getOwnerBooking = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 // ==========================================
-// 6. CHANGE STATUS (Owner Action)
+// 6. CHANGE STATUS (Owner Action) - ✅ FIXED FOR ADMIN
 // ==========================================
 export const ChangeBookingStatus = async (req, res) => {
   try {
@@ -144,9 +145,16 @@ export const ChangeBookingStatus = async (req, res) => {
       return res.json({ success: false, message: "Booking not found" });
     }
 
-    // ✅ Verify ownership via the car
-    if (booking.car.owner.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ success: false, message: "Unauthorized" });
+    // ✅ ALLOW ADMIN to change any booking
+    // ✅ ALLOW CAR OWNER to change their bookings
+    const isAdmin = req.user.role === "admin";
+    const isOwner = booking.car.owner.toString() === req.user._id.toString();
+
+    if (!isAdmin && !isOwner) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized - Not your booking",
+      });
     }
 
     booking.status = status;
@@ -154,6 +162,7 @@ export const ChangeBookingStatus = async (req, res) => {
 
     res.json({ success: true, message: `Booking ${status}` });
   } catch (error) {
+    console.error("Change booking status error:", error);
     res.json({ success: false, message: error.message });
   }
 };
@@ -163,15 +172,25 @@ export const ChangeBookingStatus = async (req, res) => {
 // ==========================================
 export const getOwnerDashboard = async (req, res) => {
   try {
-    const ownerId = req.user._id;
+    const userId = req.user._id;
+    const isAdmin = req.user.role === "admin";
 
-    // ✅ Get cars owned by this user
-    const ownedCars = await Car.find({ owner: ownerId });
-    const carIds = ownedCars.map((car) => car._id);
+    let carIds;
+    let totalCars;
 
-    const totalCars = ownedCars.length;
+    // ✅ Admin sees ALL cars/bookings
+    if (isAdmin) {
+      const allCars = await Car.find({});
+      carIds = allCars.map((car) => car._id);
+      totalCars = allCars.length;
+    } else {
+      // ✅ Regular users see only their cars/bookings
+      const ownedCars = await Car.find({ owner: userId });
+      carIds = ownedCars.map((car) => car._id);
+      totalCars = ownedCars.length;
+    }
 
-    // ✅ Count bookings for owned cars
+    // Count bookings
     const totalBookings = await Booking.countDocuments({
       car: { $in: carIds },
     });

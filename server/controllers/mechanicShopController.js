@@ -8,6 +8,7 @@ export const addMechanicShop = async (req, res) => {
       ownerName,
       phoneNumber,
       address,
+      email,
       city,
       latitude,
       longitude,
@@ -19,6 +20,7 @@ export const addMechanicShop = async (req, res) => {
       ownerName,
       phoneNumber,
       address,
+      email,
       city,
       latitude,
       longitude,
@@ -47,9 +49,23 @@ export const getAllShops = async (req, res) => {
 export const updateShop = async (req, res) => {
   try {
     const { shopId, ...updateData } = req.body;
+
+    // Ensure numeric values are correctly parsed if they are in the updateData
+    if (updateData.latitude)
+      updateData.latitude = parseFloat(updateData.latitude);
+    if (updateData.longitude)
+      updateData.longitude = parseFloat(updateData.longitude);
+
     const shop = await MechanicShop.findByIdAndUpdate(shopId, updateData, {
       new: true,
+      runValidators: true, // Ensures the updated email/fields still meet schema requirements
     });
+
+    if (!shop)
+      return res
+        .status(404)
+        .json({ success: false, message: "Shop not found" });
+
     res.json({ success: true, message: "Shop updated!", shop });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

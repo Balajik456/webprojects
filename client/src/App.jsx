@@ -15,8 +15,10 @@ import ManageBooking from "./pages/owner/ManageBooking";
 import RepairDashboard from "./pages/owner/RepairDashboard";
 import RepairManagement from "./pages/owner/RepairManagement";
 import ManageShops from "./pages/owner/ManageShops";
+import SubscriptionManagement from "./pages/owner/SubscriptionManagement"; // ✅ ADD THIS
+import MechanicSubscribePage from "./pages/MechanicSubscribePage";
 import Finance from "./pages/owner/Finance";
-import Login from "./components/Login"; // Make sure this path is correct
+import Login from "./components/Login";
 import { Toaster } from "react-hot-toast";
 import { useAppContext } from "./context/Appcontext";
 
@@ -28,11 +30,7 @@ const App = () => {
   return (
     <>
       <Toaster position="top-center" />
-
-      {/* Login Modal */}
       {showLogin && <Login />}
-
-      {/* Navbar - Hidden on owner pages */}
       {!isOwnerPath && <Navbar />}
 
       <Routes>
@@ -43,6 +41,9 @@ const App = () => {
         <Route path="/car-details/:id" element={<Cardetails />} />
         <Route path="/my-bookings" element={<MyBooking />} />
         <Route path="/car-repairs" element={<CarRepairs />} />
+
+        {/* ✅ PUBLIC MECHANIC SUBSCRIPTION ROUTE */}
+        <Route path="/mechanic/subscribe" element={<MechanicSubscribePage />} />
 
         {/* OWNER ROUTES (Protected) */}
         <Route
@@ -57,13 +58,15 @@ const App = () => {
           <Route path="manage-shops" element={<ManageShops />} />
           <Route path="repairs" element={<RepairManagement />} />
           <Route path="repair-analytics" element={<RepairDashboard />} />
+
+          {/* ✅ ADD THIS - SUBSCRIPTION MANAGEMENT ROUTE */}
+          <Route path="subscriptions" element={<SubscriptionManagement />} />
         </Route>
 
-        {/* Catch-all for undefined routes */}
+        {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
 
-      {/* Footer - Hidden on owner pages */}
       {!isOwnerPath && <Footer />}
     </>
   );

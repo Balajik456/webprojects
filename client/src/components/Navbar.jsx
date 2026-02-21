@@ -3,45 +3,33 @@ import { assets, menuLinks } from "../assets/assets";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/Appcontext";
 import toast from "react-hot-toast";
-import {motion} from 'motion/react'
+import { motion } from "motion/react";
 
 const Navbar = () => {
-  const { setShowLogin, user, logout, isOwner, axios, setIsOwner } =
-    useAppContext();
-
+  const { setShowLogin, user, logout } = useAppContext();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
-  const changeRole = async () => {
-    try {
-      const { data } = await axios.post("/api/owner/change-role");
-      if (data.success) {
-        setIsOwner(true);
-        toast.success(data.message);
-      } else {
-        toast.error(data.message);
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
-    }
-  };
-
   return (
-    <motion.div 
-    initial={{y:-20,opacity:0}}
-    animate={{y:0,opacity:1}}
-    transition={{duration:0.5}}
-    
-    className="flex items-center justify-between p-6 bg-light text-violet-600 border-b border-borderColor relative">
+    <motion.div
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="flex items-center justify-between p-6 bg-transparent text-gray-700"
+    >
       <NavLink to="/">
-        <motion.img whileHover={{scale:1.05}}
-        src={assets.logo} alt="logo" className="h-8" />
+        <motion.img
+          whileHover={{ scale: 1.05 }}
+          src={assets.logo}
+          alt="logo"
+          className="h-8"
+        />
       </NavLink>
 
       <div
         className={`max-sm:fixed max-sm:h-screen max-sm:w-full max-sm:top-16
-        max-sm:border-t border-borderColor right-0 flex flex-col sm:flex-row
-        items-start sm:items-center gap-4 sm:gap-8 max-sm:p-4 bg-light text-gray-700
+        max-sm:border-t max-sm:border-gray-200 right-0 flex flex-col sm:flex-row
+        items-start sm:items-center gap-4 sm:gap-8 max-sm:p-4 max-sm:bg-white
         transition-all duration-300 z-50
         ${open ? "max-sm:translate-x-0" : "max-sm:translate-x-full"}`}
       >
@@ -51,7 +39,11 @@ const Navbar = () => {
             to={link.path}
             end={link.path === "/"}
             className={({ isActive }) =>
-              isActive ? "text-primary font-semibold" : "hover:text-primary"
+              `transition-colors ${
+                isActive
+                  ? "text-indigo-600 font-medium"
+                  : "text-gray-700 hover:text-indigo-600"
+              }`
             }
             onClick={() => setOpen(false)}
           >
@@ -59,16 +51,30 @@ const Navbar = () => {
           </NavLink>
         ))}
 
-        <div className="flex gap-6">
-          <button onClick={() => isOwner ? navigate("/owner") : changeRole()}>
-            {isOwner ? "Dashboard" : "List Cars"}
-          </button>
+        {/* ✅ Join as Mechanic Button */}
+        <NavLink
+          to="/mechanic/subscribe"
+          onClick={() => setOpen(false)}
+          className="text-sm font-medium text-indigo-600 border border-indigo-600 px-4 py-1.5 rounded-lg hover:bg-indigo-50 transition whitespace-nowrap"
+        >
+        Mechanic shop owner
+        </NavLink>
+
+        <div className="flex gap-4 items-center">
+          {user && (
+            <button
+              onClick={() => navigate("/owner")}
+              className="text-gray-700 hover:text-indigo-600 transition"
+            >
+              Dashboard
+            </button>
+          )}
 
           <button
             onClick={() => {
               user ? logout() : setShowLogin(true);
             }}
-            className="px-8 py-2 bg-primary text-white rounded-lg"
+            className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
           >
             {user ? "Logout" : "Login"}
           </button>
