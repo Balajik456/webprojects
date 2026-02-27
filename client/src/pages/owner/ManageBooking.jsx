@@ -12,13 +12,16 @@ const ManageBooking = () => {
     try {
       setLoading(true);
       const { data } = await axios.get("/api/bookings/owner");
+
       if (data.success) {
+        console.log("Bookings fetched:", data.bookings); // Debug log
         setBookings(data.bookings);
       } else {
-        toast.error(data.message);
+        toast.error(data.message || "Failed to load bookings");
       }
     } catch (error) {
-      toast.error(error.message);
+      console.error("Fetch bookings error:", error);
+      toast.error(error.response?.data?.message || "Failed to load bookings");
     } finally {
       setLoading(false);
     }
@@ -32,19 +35,13 @@ const ManageBooking = () => {
       });
 
       if (data.success) {
-        toast.success(`✅ Booking ${status}!`);
-
-        // Update the bookings state immediately
-        setBookings((prevBookings) =>
-          prevBookings.map((booking) =>
-            booking._id === bookingId ? { ...booking, status } : booking,
-          ),
-        );
+        toast.success(data.message || `Booking ${status}!`);
+        fetchOwnerBookings(); // Refresh the list
       } else {
-        toast.error(data.message);
+        toast.error(data.message || "Update failed");
       }
     } catch (error) {
-      console.error(error);
+      console.error("Status update error:", error);
       toast.error(error.response?.data?.message || "Update failed");
     }
   };
@@ -53,6 +50,17 @@ const ManageBooking = () => {
     fetchOwnerBookings();
   }, []);
 
+  if (loading) {
+    return (
+      <div className="px-4 pt-10 md:px-10 w-full">
+        <Title title="Manage Bookings" subTitle="Loading bookings..." />
+        <div className="text-center py-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="px-4 pt-10 md:px-10 w-full">
       <Title
@@ -60,110 +68,109 @@ const ManageBooking = () => {
         subTitle="Track all customer bookings, approve or cancel requests, and manage the booking status"
       />
 
-      {loading ? (
-        <div className="text-center py-20 text-gray-400">Loading...</div>
-      ) : bookings.length === 0 ? (
-        <div className="text-center py-20 text-gray-400">No bookings yet</div>
+      {bookings.length === 0 ? (
+        <div className="text-center py-20 border border-dashed rounded-lg mt-6">
+          <p className="text-gray-400">No bookings found</p>
+        </div>
       ) : (
-        <div className="border border-gray-200 rounded-2xl overflow-hidden mt-6 bg-white">
-          {/* Table Header */}
-          <div className="grid grid-cols-12 gap-4 p-4 bg-gray-50 border-b border-gray-200 font-semibold text-gray-700 text-sm">
-            <div className="col-span-3">Car</div>
-            <div className="col-span-2">Category</div>
-            <div className="col-span-2">Price Per Day</div>
-            <div className="col-span-2">Status</div>
-            <div className="col-span-3">Actions</div>
-          </div>
+        <div className="max-w-6xl w-full rounded-md overflow-x-auto border border-gray-200 mt-6">
+          <table className="w-full border-collapse text-left text-sm text-gray-600">
+            <thead className="bg-gray-50 text-gray-500">
+              <tr>
+                <th className="p-3 font-medium">Car</th>
+                <th className="p-3 font-medium">Customer</th>
+                <th className="p-3 font-medium max-md:hidden">Date Range</th>
+                <th className="p-3 font-medium">Total</th>
+                <th className="p-3 font-medium max-md:hidden">Status</th>
+                <th className="p-3 font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bookings.map((booking, index) => (
+                <tr
+                  key={booking._id || index}
+                  className="border-t border-gray-200 hover:bg-gray-50"
+                >
+                  {/* Car Info */}
+                  <td className="p-3 flex items-center gap-3">
+                    {booking.car?.image && (
+                      <img
+                        src={booking.car.image}
+                        alt={booking.car?.brand}
+                        className="h-12 w-12 aspect-square rounded-md object-cover"
+                      />
+                    )}
+                    <div className="max-md:hidden">
+                      <p className="font-medium text-gray-800">
+                        {booking.car?.brand || "Unknown"}{" "}
+                        {booking.car?.model || ""}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {booking.car?.category || ""}
+                      </p>
+                    </div>
+                  </td>
 
-          {/* Table Body */}
-          <div className="divide-y divide-gray-200">
-            {bookings.map((booking) => (
-              <div
-                key={booking._id}
-                className="grid grid-cols-12 gap-4 p-4 items-center hover:bg-gray-50 transition"
-              >
-                {/* Car Info with Image */}
-                <div className="col-span-3 flex items-center gap-3">
-                  <img
-                    src={booking.car?.image}
-                    alt={booking.car?.model}
-                    className="w-16 h-16 rounded-lg object-cover"
-                  />
-                  <div>
-                    <p className="font-semibold text-gray-800">
-                      {booking.car?.brand} {booking.car?.model}
+                  {/* Customer Info */}
+                  <td className="p-3">
+                    <p className="font-medium text-gray-800">
+                      {booking.user?.name || "N/A"}
                     </p>
                     <p className="text-xs text-gray-500">
-                      • {booking.car?.transmission}
+                      {booking.user?.email || ""}
                     </p>
-                  </div>
-                </div>
+                  </td>
 
-                {/* Category */}
-                <div className="col-span-2">
-                  <p className="text-gray-600">{booking.car?.category}</p>
-                </div>
+                  {/* Date Range */}
+                  <td className="p-3 max-md:hidden text-gray-600">
+                    {booking.pickupDate?.split("T")[0]} to{" "}
+                    {booking.returnDate?.split("T")[0]}
+                  </td>
 
-                {/* Price */}
-                <div className="col-span-2">
-                  <p className="text-gray-800 font-semibold">
+                  {/* Price */}
+                  <td className="p-3 font-semibold text-gray-800">
                     {currency} {booking.price}
-                  </p>
-                </div>
+                  </td>
 
-                {/* Status Badge */}
-                <div className="col-span-2">
-                  <span
-                    className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                      booking.status === "confirmed"
-                        ? "bg-green-100 text-green-600"
-                        : booking.status === "cancelled"
-                          ? "bg-red-100 text-red-600"
-                          : "bg-yellow-100 text-yellow-600"
-                    }`}
-                  >
-                    {booking.status}
-                  </span>
-                </div>
-
-                {/* Actions */}
-                <div className="col-span-3 flex gap-2">
-                  {booking.status === "pending" && (
-                    <>
-                      <button
-                        onClick={() =>
-                          changeBookingStatus(booking._id, "confirmed")
-                        }
-                        className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition"
-                      >
-                        Approve
-                      </button>
-                      <button
-                        onClick={() =>
-                          changeBookingStatus(booking._id, "cancelled")
-                        }
-                        className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition"
-                      >
-                        Cancel
-                      </button>
-                    </>
-                  )}
-
-                  {booking.status === "confirmed" && (
-                    <span className="text-gray-400 text-sm italic">
-                      Approved
+                  {/* Status Badge */}
+                  <td className="p-3 max-md:hidden">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        booking.status === "confirmed"
+                          ? "bg-green-100 text-green-600"
+                          : booking.status === "cancelled"
+                            ? "bg-red-100 text-red-600"
+                            : "bg-yellow-100 text-yellow-600"
+                      }`}
+                    >
+                      {booking.status}
                     </span>
-                  )}
+                  </td>
 
-                  {booking.status === "cancelled" && (
-                    <span className="text-gray-400 text-sm italic">
-                      Cancelled
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+                  {/* Actions */}
+                  <td className="p-3">
+                    {booking.status === "pending" ? (
+                      <select
+                        onChange={(e) =>
+                          changeBookingStatus(booking._id, e.target.value)
+                        }
+                        value={booking.status}
+                        className="px-2 py-1.5 text-sm text-gray-600 border border-gray-300 rounded-md outline-none cursor-pointer hover:border-indigo-500 focus:border-indigo-500 transition"
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                    ) : (
+                      <span className="text-gray-400 text-xs italic">
+                        {booking.status === "confirmed" ? "Approved" : "Closed"}
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

@@ -3,7 +3,7 @@ import Booking from "../models/Booking.js";
 import Car from "../models/Car.js";
 
 // ==========================================
-// 1. CHECK AVAILABILITY (Helper Function)
+// CHECK AVAILABILITY (Helper Function)
 // ==========================================
 const checkAvailability = async (car, pickupDate, returnDate) => {
   const bookings = await Booking.find({
@@ -20,7 +20,7 @@ const checkAvailability = async (car, pickupDate, returnDate) => {
 };
 
 // ==========================================
-// 2. SEARCH AVAILABLE CARS (User)
+// SEARCH AVAILABLE CARS (User)
 // ==========================================
 export const getAvailableCars = async (req, res) => {
   try {
@@ -38,7 +38,7 @@ export const getAvailableCars = async (req, res) => {
 };
 
 // ==========================================
-// 3. CREATE BOOKING (User)
+// CREATE BOOKING (User)
 // ==========================================
 export const createBooking = async (req, res) => {
   try {
@@ -54,7 +54,9 @@ export const createBooking = async (req, res) => {
     }
 
     const carData = await Car.findById(car);
-    if (!carData) return res.json({ success: false, message: "Car not found" });
+    if (!carData) {
+      return res.json({ success: false, message: "Car not found" });
+    }
 
     // Calculate Price
     const picked = new Date(pickupDate);
@@ -78,21 +80,23 @@ export const createBooking = async (req, res) => {
 };
 
 // ==========================================
-// 4. GET USER'S BOOKINGS
+// GET USER'S BOOKINGS
 // ==========================================
 export const getUserBookings = async (req, res) => {
   try {
     const bookings = await Booking.find({ user: req.user._id })
       .populate("car")
+      .populate("user", "name email")
       .sort({ createdAt: -1 });
+
     res.json({ success: true, bookings });
   } catch (error) {
-    res.json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
 // ==========================================
-// 5. GET OWNER'S BOOKINGS (List View) - ✅ ADMIN FIX
+// GET OWNER'S BOOKINGS - ✅ FIXED
 // ==========================================
 export const getOwnerBooking = async (req, res) => {
   try {
@@ -100,31 +104,30 @@ export const getOwnerBooking = async (req, res) => {
     console.log("User ID:", req.user._id);
     console.log("User Role:", req.user.role);
 
-    // ✅ If user is ADMIN, show ALL bookings
-    if (req.user.role === "admin") {
-      const allBookings = await Booking.find({})
-        .populate("car")
-        .populate("user", "name email")
+    let bookings;
+
+    // ✅ If user is ADMIN or OWNER, show ALL bookings
+    if (req.user.role === "admin" || req.user.role === "owner") {
+      bookings = await Booking.find({})
+        .populate("car", "brand model category image year location priceperday")
+        .populate("user", "name email phone")
         .sort({ createdAt: -1 });
 
-      console.log(`✅ Admin: Showing all ${allBookings.length} bookings`);
-      return res.json({ success: true, bookings: allBookings });
+      console.log(`✅ Admin/Owner: Showing all ${bookings.length} bookings`);
+    } else {
+      // ✅ Regular users only see bookings for THEIR cars
+      const ownedCars = await Car.find({ owner: req.user._id });
+      const carIds = ownedCars.map((car) => car._id);
+
+      console.log(`✅ Regular user: Found ${ownedCars.length} owned cars`);
+
+      bookings = await Booking.find({ car: { $in: carIds } })
+        .populate("car", "brand model category image year location priceperday")
+        .populate("user", "name email phone")
+        .sort({ createdAt: -1 });
+
+      console.log(`✅ Found ${bookings.length} bookings for owned cars`);
     }
-
-    // ✅ Regular users only see bookings for THEIR cars
-    const ownedCars = await Car.find({ owner: req.user._id });
-    const carIds = ownedCars.map((car) => car._id);
-
-    console.log(`✅ Regular user: Found ${ownedCars.length} owned cars`);
-
-    const bookings = await Booking.find({
-      car: { $in: carIds },
-    })
-      .populate("car")
-      .populate("user", "name email")
-      .sort({ createdAt: -1 });
-
-    console.log(`✅ Found ${bookings.length} bookings for owned cars`);
 
     res.json({ success: true, bookings });
   } catch (error) {
@@ -134,23 +137,28 @@ export const getOwnerBooking = async (req, res) => {
 };
 
 // ==========================================
-// 6. CHANGE STATUS (Owner Action) - ✅ FIXED FOR ADMIN
+// CHANGE STATUS (Owner Action)
 // ==========================================
 export const ChangeBookingStatus = async (req, res) => {
   try {
     const { bookingId, status } = req.body;
+
+    console.log("Change status request:", { bookingId, status });
+
     const booking = await Booking.findById(bookingId).populate("car");
 
     if (!booking) {
-      return res.json({ success: false, message: "Booking not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
     }
 
-    // ✅ ALLOW ADMIN to change any booking
-    // ✅ ALLOW CAR OWNER to change their bookings
-    const isAdmin = req.user.role === "admin";
-    const isOwner = booking.car.owner.toString() === req.user._id.toString();
+    // ✅ ALLOW ADMIN/OWNER to change any booking
+    const isAdmin = req.user.role === "admin" || req.user.role === "owner";
+    const isCarOwner = booking.car.owner.toString() === req.user._id.toString();
 
-    if (!isAdmin && !isOwner) {
+    if (!isAdmin && !isCarOwner) {
       return res.status(403).json({
         success: false,
         message: "Unauthorized - Not your booking",
@@ -160,20 +168,28 @@ export const ChangeBookingStatus = async (req, res) => {
     booking.status = status;
     await booking.save();
 
-    res.json({ success: true, message: `Booking ${status}` });
+    console.log(`✅ Booking ${bookingId} status changed to ${status}`);
+
+    res.json({
+      success: true,
+      message: `Booking ${status} successfully`,
+    });
   } catch (error) {
     console.error("Change booking status error:", error);
-    res.json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
 // ==========================================
-// 7. DASHBOARD STATS (Owner Dashboard)
+// DASHBOARD STATS
 // ==========================================
 export const getOwnerDashboard = async (req, res) => {
   try {
     const userId = req.user._id;
-    const isAdmin = req.user.role === "admin";
+    const isAdmin = req.user.role === "admin" || req.user.role === "owner";
 
     let carIds;
     let totalCars;
@@ -212,7 +228,10 @@ export const getOwnerDashboard = async (req, res) => {
         },
       },
       {
-        $group: { _id: null, total: { $sum: { $toDouble: "$price" } } },
+        $group: {
+          _id: null,
+          total: { $sum: { $toDouble: "$price" } },
+        },
       },
     ]);
 
@@ -230,6 +249,9 @@ export const getOwnerDashboard = async (req, res) => {
     });
   } catch (error) {
     console.error("Dashboard error:", error);
-    res.status(500).json({ success: false, message: "Dashboard error" });
+    res.status(500).json({
+      success: false,
+      message: "Dashboard error",
+    });
   }
 };

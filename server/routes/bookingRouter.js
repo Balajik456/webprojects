@@ -5,9 +5,9 @@ import {
   getUserBookings,
   getOwnerBooking,
   ChangeBookingStatus,
-  getOwnerDashboard, // <--- Make sure this is imported!
+  getOwnerDashboard,
 } from "../controllers/bookingController.js";
-import { protect } from "../middleware/auth.js";
+import { protect } from "../middlewares/auth.js"; // ✅ Changed to middlewares
 
 const bookingRouter = express.Router();
 
@@ -19,7 +19,7 @@ bookingRouter.post("/create", protect, createBooking);
 bookingRouter.get("/user", protect, getUserBookings);
 
 // Protected Owner Routes
-bookingRouter.get("/owner", protect, getOwnerBooking);
+bookingRouter.get("/owner", protect, getOwnerBooking); // ✅ This should work
 bookingRouter.post("/status", protect, ChangeBookingStatus);
 bookingRouter.get("/dashboard", protect, getOwnerDashboard);
 
