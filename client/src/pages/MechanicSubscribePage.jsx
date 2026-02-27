@@ -3,7 +3,8 @@ import { Check, MapPin } from "lucide-react";
 import toast from "react-hot-toast";
 import axios from "axios";
 
-const BASE_URL = "http://localhost:3000";
+const BASE_URL =
+  import.meta.env.VITE_BASE_URL || "https://webprojects-server.vercel.app";
 
 const MechanicSubscribePage = () => {
   const [loading, setLoading] = useState(false);
