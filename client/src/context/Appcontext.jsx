@@ -6,7 +6,8 @@ import toast from "react-hot-toast";
 export const Appcontext = createContext();
 
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:3000",
+  baseURL:
+    import.meta.env.VITE_BASE_URL || "https://webprojects-server.vercel.app",
   withCredentials: true,
 });
 
@@ -15,12 +16,14 @@ export const AppProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem("token") || null);
   const [user, setUser] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false); // ✅ ADDED
+  const [isAdmin, setIsAdmin] = useState(false);
   const [repairs, setRepairs] = useState([]);
   const [cars, setCars] = useState([]);
   const [pickupDate, setPickupDate] = useState("");
   const [returnDate, setReturnDate] = useState("");
-  const [currency, setCurrency] = useState("₹");
+  const [currency, setCurrency] = useState(
+    import.meta.env.VITE_CURRENCY || "₹",
+  );
   const [showLogin, setShowLogin] = useState(false);
 
   // ✅ REQUEST INTERCEPTOR - Attach token to every request
@@ -45,7 +48,7 @@ export const AppProvider = ({ children }) => {
           setToken(null);
           setUser(null);
           setIsOwner(false);
-          setIsAdmin(false); // ✅ ADDED
+          setIsAdmin(false);
           setShowLogin(true);
           toast.error("Session expired. Please login again.");
         }
@@ -64,9 +67,12 @@ export const AppProvider = ({ children }) => {
       const { data } = await axiosInstance.get("/api/car/list");
       if (data.success) {
         setCars(data.cars);
+      } else {
+        toast.error("Failed to load cars");
       }
     } catch (error) {
       console.error("Failed to fetch car data");
+      toast.error("Failed to load cars");
     }
   };
 
@@ -93,9 +99,8 @@ export const AppProvider = ({ children }) => {
       const { data } = await axiosInstance.get("/api/user/data");
       if (data.success) {
         setUser(data.user);
-        // ✅ MODIFIED - Allow both owner and admin to access dashboard
         setIsOwner(data.user.role === "owner" || data.user.role === "admin");
-        setIsAdmin(data.user.role === "admin"); // ✅ ADDED
+        setIsAdmin(data.user.role === "admin");
       }
     } catch (error) {
       console.warn("Auth check failed");
@@ -103,7 +108,7 @@ export const AppProvider = ({ children }) => {
       setToken(null);
       setUser(null);
       setIsOwner(false);
-      setIsAdmin(false); // ✅ ADDED
+      setIsAdmin(false);
     }
   };
 
@@ -112,7 +117,7 @@ export const AppProvider = ({ children }) => {
     setToken(null);
     setUser(null);
     setIsOwner(false);
-    setIsAdmin(false); // ✅ ADDED
+    setIsAdmin(false);
     toast.success("Logged out successfully");
     navigate("/");
   };
@@ -133,7 +138,7 @@ export const AppProvider = ({ children }) => {
     fetchUser,
     isOwner,
     setIsOwner,
-    isAdmin, // ✅ ADDED
+    isAdmin,
     navigate,
     repairs,
     fetchRepairs,
