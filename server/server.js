@@ -21,19 +21,22 @@ app.use(
       "http://localhost:5173",
       "http://localhost:3000",
       "https://car-rental-services-theta.vercel.app",
+      "https://webprojects-phi.vercel.app", // ✅ Added to fix CORS errors
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
-app.options("*", cors());
+
+// ✅ FIX: Change '*' to '(.*)' to prevent the "Missing parameter name" crash
+app.options("(.*)", cors());
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 /* ================= DB ================= */
-connectDB();
+connectDB(); // Ensure MONGO_URI is in Vercel Environment Variables
 
 /* ================= ROUTES ================= */
 app.use("/api/user", userRouter);
