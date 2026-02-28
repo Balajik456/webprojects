@@ -186,6 +186,8 @@ export const ChangeBookingStatus = async (req, res) => {
 // ==========================================
 // DASHBOARD STATS
 // ==========================================
+// ... all your functions above ...
+
 export const getOwnerDashboard = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -194,19 +196,16 @@ export const getOwnerDashboard = async (req, res) => {
     let carIds;
     let totalCars;
 
-    // ✅ Admin/Owner sees ALL cars/bookings
     if (isAdmin) {
       const allCars = await Car.find({});
       carIds = allCars.map((car) => car._id);
       totalCars = allCars.length;
     } else {
-      // ✅ Regular users see only their cars/bookings
       const ownedCars = await Car.find({ owner: userId });
       carIds = ownedCars.map((car) => car._id);
       totalCars = ownedCars.length;
     }
 
-    // Count bookings
     const totalBookings = await Booking.countDocuments({
       car: { $in: carIds },
     });
@@ -219,7 +218,6 @@ export const getOwnerDashboard = async (req, res) => {
       status: "confirmed",
     });
 
-    // Revenue Aggregation
     const revenueData = await Booking.aggregate([
       {
         $match: {
@@ -256,12 +254,4 @@ export const getOwnerDashboard = async (req, res) => {
   }
 };
 
-// ✅ EXPLICIT EXPORTS (This was missing!)
-export default {
-  getAvailableCars,
-  createBooking,
-  getUserBookings,
-  getOwnerBooking,
-  ChangeBookingStatus,
-  getOwnerDashboard,
-};
+// ✅ END OF FILE - No default export needed!
