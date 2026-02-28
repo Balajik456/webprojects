@@ -5,9 +5,10 @@ import toast from "react-hot-toast";
 
 export const Appcontext = createContext();
 
+// ✅ FIXED: Use VITE_API_URL instead of VITE_BASE_URL
 const axiosInstance = axios.create({
   baseURL:
-    import.meta.env.VITE_BASE_URL || "https://webprojects-server.vercel.app",
+    import.meta.env.VITE_API_URL || "https://webprojects-server.vercel.app",
   withCredentials: true,
 });
 
@@ -69,7 +70,7 @@ export const AppProvider = ({ children }) => {
         toast.error("Failed to load cars");
       }
     } catch (error) {
-      console.error("Failed to fetch car data");
+      console.error("Failed to fetch car data:", error);
       toast.error("Failed to load cars");
     }
   };

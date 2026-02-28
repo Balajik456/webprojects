@@ -15,6 +15,7 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
+  "https://car-rental-frontend-tau-one.vercel.app",
   "https://car-rental-services-theta.vercel.app",
   "https://webprojects-phi.vercel.app",
   "https://webprojects-server.vercel.app",
