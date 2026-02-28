@@ -8,7 +8,7 @@ export const Appcontext = createContext();
 // ✅ FIXED: Use VITE_API_URL instead of VITE_BASE_URL
 const axiosInstance = axios.create({
   baseURL:
-    import.meta.env.VITE_API_URL || "https://webprojects-server.vercel.app",
+    import.meta.env.VITE_BASE_URL || "https://webprojects-server.vercel.app",
   withCredentials: true,
 });
 
