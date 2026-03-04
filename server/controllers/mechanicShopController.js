@@ -82,3 +82,37 @@ export const deleteShop = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+export const checkSubscriptionStatus = async (req, res) => {
+  try {
+    const { email } = req.query;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    const subscription = await MechanicShop.findOne({ email }).sort({
+      createdAt: -1,
+    });
+
+    if (!subscription) {
+      return res.json({
+        success: false,
+        message: "No subscription found",
+      });
+    }
+
+    res.json({
+      success: true,
+      subscription,
+    });
+  } catch (error) {
+    console.error("Check status error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

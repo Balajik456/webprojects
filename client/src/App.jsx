@@ -15,8 +15,9 @@ import ManageBooking from "./pages/owner/ManageBooking";
 import RepairDashboard from "./pages/owner/RepairDashboard";
 import RepairManagement from "./pages/owner/RepairManagement";
 import ManageShops from "./pages/owner/ManageShops";
-import SubscriptionManagement from "./pages/owner/SubscriptionManagement"; // ✅ ADD THIS
+import SubscriptionManagement from "./pages/owner/SubscriptionManagement";
 import MechanicSubscribePage from "./pages/MechanicSubscribePage";
+import MySubscriptionStatus from "./pages/mechanic/MySubscriptionStatus"; // ✅ ADD THIS
 import Finance from "./pages/owner/Finance";
 import Login from "./components/Login";
 import { Toaster } from "react-hot-toast";
@@ -42,8 +43,9 @@ const App = () => {
         <Route path="/my-bookings" element={<MyBooking />} />
         <Route path="/car-repairs" element={<CarRepairs />} />
 
-        {/* ✅ PUBLIC MECHANIC SUBSCRIPTION ROUTE */}
+        {/* ✅ MECHANIC PUBLIC ROUTES */}
         <Route path="/mechanic/subscribe" element={<MechanicSubscribePage />} />
+        <Route path="/mechanic/status" element={<MySubscriptionStatus />} />
 
         {/* OWNER ROUTES (Protected) */}
         <Route
@@ -58,12 +60,9 @@ const App = () => {
           <Route path="manage-shops" element={<ManageShops />} />
           <Route path="repairs" element={<RepairManagement />} />
           <Route path="repair-analytics" element={<RepairDashboard />} />
-
-          {/* ✅ ADD THIS - SUBSCRIPTION MANAGEMENT ROUTE */}
           <Route path="subscriptions" element={<SubscriptionManagement />} />
         </Route>
 
-        {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
 
