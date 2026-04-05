@@ -31,11 +31,13 @@ const CarCard = ({ car }) => {
 
         {/* PRICE */}
         <div className="absolute bottom-4 right-4 bg-black/80 backdrop-blur-sm text-white px-3 py-2 rounded-lg">
-  <span className="font-semibold">
-    {currency}{String(car.priceperday).replace(/\s*\/\s*day/gi, '')} / day
-  </span>
-</div>
-
+          <span className="font-semibold">
+            {currency}
+            {String(car.priceperday).replace(/\s*\/\s*day/gi, "")} / day
+          </span>
+        </div>
+      </div>{" "}
+      {/* ← this closing div was missing! */}
       {/* DETAILS */}
       <div className="p-4 sm:p-5">
         <h3 className="text-lg font-medium">
